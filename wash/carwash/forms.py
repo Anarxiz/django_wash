@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django import forms
-from django.core.exceptions import ValidationError
 
 from .models import Booking, Client, Service, Box, Washer
 
@@ -49,15 +48,18 @@ class BookingForm(forms.ModelForm):
             "duration_minutes": forms.NumberInput(
                 attrs={"class": "form-control", "min": 1, "max": 480}
             ),
-            "status": forms.Select(attrs={"class": "form-control"}),
-            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "status": forms.Select(
+                attrs={"class": "form-control"}),
+            "notes": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["box"].queryset = Box.objects.filter(is_active=True)
         self.fields["washer"].queryset = Washer.objects.filter(is_active=True)
-        self.fields["services"].queryset = Service.objects.filter(is_active=True)
+        self.fields["services"].queryset = Service.objects.filter(
+            is_active=True)
 
         # Устанавливаем формат для datetime-local поля
         if (
@@ -110,7 +112,8 @@ class BookingForm(forms.ModelForm):
             for booking in conflicting_bookings:
                 booking_end = booking.get_end_time()
                 if booking_end and (
-                    scheduled_time < booking_end and end_time > booking.scheduled_time
+                    scheduled_time < booking_end and
+                    end_time > booking.scheduled_time
                 ):
                     start_str = booking.scheduled_time.strftime(
                         "%d.%m.%Y %H:%M"
@@ -134,7 +137,8 @@ class BookingForm(forms.ModelForm):
             for booking in conflicting_bookings:
                 booking_end = booking.get_end_time()
                 if booking_end and (
-                    scheduled_time < booking_end and end_time > booking.scheduled_time
+                    scheduled_time < booking_end and
+                    end_time > booking.scheduled_time
                 ):
                     start_str = booking.scheduled_time.strftime(
                         "%d.%m.%Y %H:%M"

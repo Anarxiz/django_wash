@@ -13,5 +13,7 @@ urlpatterns = [
         views.booking_update_status,
         name="booking_update_status",
     ),
-    path("api/calculate-price/", views.calculate_price, name="calculate_price"),
+    path("api/calculate-price/",
+         views.calculate_price,
+         name="calculate_price"),
 ]

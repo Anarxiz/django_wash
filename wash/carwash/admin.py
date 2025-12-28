@@ -106,11 +106,12 @@ class BookingAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def save_related(self, request, form, formsets, change):
-        """Пересчитываем цену после сохранения связанных объектов (услуг)"""
+        """Пересчитываем цену после сохранения связанных объектов (услуг)"""  # noqa: E501
         super().save_related(request, form, formsets, change)
         obj = form.instance
         if obj.pk:  # Если объект сохранен
-            # Пересчитываем цену (учитываются услуги и клиент со скидкой)
+            # Пересчитываем цену
+            # (учитываются услуги и клиент со скидкой)
             obj.calculate_price()
             Booking.objects.filter(pk=obj.pk).update(
                 base_price=obj.base_price,
