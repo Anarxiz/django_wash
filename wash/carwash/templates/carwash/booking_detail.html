@@ -1,0 +1,135 @@
+{% extends 'carwash/base.html' %}
+
+{% block title %}Запись #{{ booking.pk }} - Автомойка{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Запись #{{ booking.pk }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'booking_edit' booking.pk %}" class="btn btn-primary">Редактировать</a>
+        <a href="{% url 'booking_list' %}" class="btn btn-secondary">Назад к списку</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Информация о записи</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Клиент:</th>
+                        <td>{{ booking.client.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Телефон:</th>
+                        <td>{{ booking.client.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Дата и время начала:</th>
+                        <td>{{ booking.scheduled_time|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Дата и время окончания:</th>
+                        <td>{{ booking.end_time|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Длительность:</th>
+                        <td>{{ booking.duration_minutes }} минут</td>
+                    </tr>
+                    <tr>
+                        <th>Бокс:</th>
+                        <td>{{ booking.box }}</td>
+                    </tr>
+                    <tr>
+                        <th>Мойщик:</th>
+                        <td>{{ booking.washer|default:"Не назначен" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            <span class="status-badge status-{{ booking.status }}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if booking.notes %}
+                    <tr>
+                        <th>Заметки:</th>
+                        <td>{{ booking.notes|linebreaks }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Создано:</th>
+                        <td>{{ booking.created_at|date:"d.m.Y H:i" }} {% if booking.created_by %}администратором {{ booking.created_by.username }}{% endif %}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5>Услуги</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for service in booking.services.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ service.name }}
+                        <span class="badge bg-primary rounded-pill">{{ service.price }} ₽</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5>Цена</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Базовая цена:</td>
+                        <td class="text-end"><strong>{{ booking.base_price }} ₽</strong></td>
+                    </tr>
+                    {% if booking.discount_amount > 0 %}
+                    <tr>
+                        <td>Скидка {% if booking.client.is_regular %}({{ booking.client.discount_percent }}%){% endif %}:</td>
+                        <td class="text-end text-danger">-{{ booking.discount_amount }} ₽</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="table-success">
+                        <td><strong>Итого:</strong></td>
+                        <td class="text-end"><strong>{{ booking.final_price }} ₽</strong></td>
+                    </tr>
+                </table>
+                
+                {% if booking.client.is_regular %}
+                <div class="alert alert-info mt-3">
+                    <small>Постоянный клиент. Скидка {{ booking.client.discount_percent }}%</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if booking.client.notes %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Заметки о клиенте</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">{{ booking.client.notes|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

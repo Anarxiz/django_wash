@@ -1,0 +1,248 @@
+{% extends 'carwash/base.html' %}
+
+{% block title %}{% if booking %}Редактирование записи{% else %}Новая запись{% endif %} - Автомойка{% endblock %}
+
+{% block extra_css %}
+<style>
+    .price-preview {
+        background-color: #f8f9fa;
+        border: 2px solid #28a745;
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    .price-preview h5 {
+        color: #28a745;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3>{% if booking %}Редактирование записи{% else %}Новая запись{% endif %}</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bookingForm">
+                    {% csrf_token %}
+                    
+                    <h5 class="mt-3 mb-3">Данные клиента</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.client_name.label }}</label>
+                            {{ form.client_name }}
+                            {% if form.client_name.errors %}
+                            <div class="text-danger">{{ form.client_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.client_phone.label }}</label>
+                            {{ form.client_phone }}
+                            {% if form.client_phone.errors %}
+                            <div class="text-danger">{{ form.client_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_regular_client }}
+                            <label class="form-check-label" for="{{ form.is_regular_client.id_for_label }}">
+                                {{ form.is_regular_client.label }}
+                            </label>
+                        </div>
+                        {% if form.is_regular_client.errors %}
+                        <div class="text-danger">{{ form.is_regular_client.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5 class="mt-3 mb-3">Услуги</h5>
+                    <div class="mb-3">
+                        <div class="row">
+                            {% for service in services %}
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" 
+                                           name="services" 
+                                           value="{{ service.pk }}" 
+                                           id="id_services_{{ service.pk }}"
+                                           class="form-check-input service-checkbox"
+                                           {% if booking %}{% if service in booking.services.all %}checked{% endif %}{% endif %}>
+                                    <label class="form-check-label" for="id_services_{{ service.pk }}">
+                                        {{ service.name }}
+                                        <strong class="text-primary">({{ service.price }} ₽)</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.services.errors %}
+                        <div class="text-danger">{{ form.services.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5 class="mt-3 mb-3">Детали записи</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ form.box.label }}</label>
+                            {{ form.box }}
+                            {% if form.box.errors %}
+                            <div class="text-danger">{{ form.box.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ form.washer.label }}</label>
+                            {{ form.washer }}
+                            {% if form.washer.errors %}
+                            <div class="text-danger">{{ form.washer.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="text-danger">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.scheduled_time.label }}</label>
+                            {{ form.scheduled_time }}
+                            {% if form.scheduled_time.errors %}
+                            <div class="text-danger">{{ form.scheduled_time.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.duration_minutes.label }}</label>
+                            {{ form.duration_minutes }}
+                            <small class="form-text text-muted">Минуты (по умолчанию 60)</small>
+                            {% if form.duration_minutes.errors %}
+                            <div class="text-danger">{{ form.duration_minutes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.notes.label }}</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger">{{ form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Блок предварительного расчета цены -->
+                    <div class="price-preview" id="pricePreview" style="display: none;">
+                        <h5>Предварительный расчет</h5>
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td>Базовая цена:</td>
+                                <td class="text-end"><strong id="basePrice">0</strong> ₽</td>
+                            </tr>
+                            <tr id="discountRow" style="display: none;">
+                                <td>Скидка (10%):</td>
+                                <td class="text-end text-danger"><strong id="discountAmount">0</strong> ₽</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><strong>Итого:</strong></td>
+                                <td class="text-end"><strong id="finalPrice">0</strong> ₽</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    {% if booking %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Текущая базовая цена:</strong> {{ booking.base_price }} ₽<br>
+                        <strong>Скидка:</strong> {{ booking.discount_amount }} ₽<br>
+                        <strong>Итоговая цена:</strong> {{ booking.final_price }} ₽
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'booking_list' %}" class="btn btn-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('bookingForm');
+    const pricePreview = document.getElementById('pricePreview');
+    const basePriceEl = document.getElementById('basePrice');
+    const discountAmountEl = document.getElementById('discountAmount');
+    const finalPriceEl = document.getElementById('finalPrice');
+    const discountRow = document.getElementById('discountRow');
+    const isRegularCheckbox = document.getElementById('{{ form.is_regular_client.id_for_label }}');
+    
+    // Получаем все чекбоксы услуг
+    const serviceCheckboxes = document.querySelectorAll('.service-checkbox');
+    
+    // Функция для расчета и отображения цены
+    function calculatePrice() {
+        const selectedServices = Array.from(serviceCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        if (selectedServices.length === 0) {
+            pricePreview.style.display = 'none';
+            return;
+        }
+        
+        const isRegular = isRegularCheckbox.checked;
+        const params = new URLSearchParams();
+        selectedServices.forEach(id => params.append('services[]', id));
+        params.append('is_regular', isRegular);
+        
+        fetch('{% url "calculate_price" %}?' + params.toString())
+            .then(response => response.json())
+            .then(data => {
+                basePriceEl.textContent = data.base_price.toFixed(2);
+                discountAmountEl.textContent = data.discount_amount.toFixed(2);
+                finalPriceEl.textContent = data.final_price.toFixed(2);
+                
+                if (data.discount_percent > 0) {
+                    discountRow.style.display = '';
+                } else {
+                    discountRow.style.display = 'none';
+                }
+                
+                pricePreview.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Ошибка при расчете цены:', error);
+            });
+    }
+    
+    // Добавляем обработчики событий
+    serviceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculatePrice);
+    });
+    
+    if (isRegularCheckbox) {
+        isRegularCheckbox.addEventListener('change', calculatePrice);
+    }
+    
+    // Вызываем расчет при загрузке страницы (для редактирования)
+    // Небольшая задержка для загрузки данных
+    setTimeout(calculatePrice, 100);
+});
+</script>
+{% endblock %}

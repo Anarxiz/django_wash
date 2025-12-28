@@ -1,0 +1,136 @@
+{% extends 'carwash/base.html' %}
+
+{% block title %}Панель управления - Автомойка{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Панель управления</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Активные боксы</h5>
+                <h2 class="text-primary">{{ active_boxes.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Активные мойщики</h5>
+                <h2 class="text-info">{{ active_washers.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Записи на сегодня</h5>
+                <h2 class="text-success">{{ today_bookings.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Ожидают</h5>
+                <h2 class="text-warning">{{ pending_bookings.count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Записи на сегодня</h5>
+            </div>
+            <div class="card-body">
+                {% if today_bookings %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Время</th>
+                                <th>Клиент</th>
+                                <th>Бокс</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in today_bookings %}
+                            <tr>
+                                <td>{{ booking.scheduled_time|date:"H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'booking_detail' booking.pk %}">{{ booking.client.name }}</a>
+                                </td>
+                                <td>{{ booking.box }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ booking.status }}">
+                                        {{ booking.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Нет записей на сегодня</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ближайшие записи</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_bookings %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Дата/Время</th>
+                                <th>Клиент</th>
+                                <th>Бокс</th>
+                                <th>Мойщик</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in pending_bookings %}
+                            <tr>
+                                <td>{{ booking.scheduled_time|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'booking_detail' booking.pk %}">{{ booking.client.name }}</a>
+                                </td>
+                                <td>{{ booking.box }}</td>
+                                <td>{{ booking.washer|default:"Не назначен" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Нет ожидающих записей</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{% url 'booking_create' %}" class="btn btn-primary btn-lg">Создать новую запись</a>
+        <a href="{% url 'booking_list' %}" class="btn btn-outline-primary btn-lg">Все записи</a>
+    </div>
+</div>
+{% endblock %}
+
